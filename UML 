@@ -1,0 +1,166 @@
+import java.util.*;
+
+// -------------------- Bank --------------------
+class Bank {
+    private String name;
+    private String bankCode;
+    private List<Account> accounts;
+
+    public Bank(String name, String bankCode) {
+        this.name = name;
+        this.bankCode = bankCode;
+        this.accounts = new ArrayList<>();
+    }
+
+    public void addAccount(Account account) {
+        accounts.add(account);
+    }
+}
+
+// -------------------- Person --------------------
+class Person {
+    private String name;
+    private String address;
+    private List<Account> accounts;
+    private List<Card> cards;
+
+    public Person(String name, String address) {
+        this.name = name;
+        this.address = address;
+        this.accounts = new ArrayList<>();
+        this.cards = new ArrayList<>();
+    }
+
+    public void addAccount(Account account) {
+        accounts.add(account);
+    }
+
+    public void addCard(Card card) {
+        cards.add(card);
+    }
+}
+
+// -------------------- Account --------------------
+class Account {
+    private String accountNumber;
+    private double balance;
+    private List<Card> cards;
+
+    public Account(String accountNumber, double balance) {
+        this.accountNumber = accountNumber;
+        this.balance = balance;
+        this.cards = new ArrayList<>();
+    }
+
+    public void addCard(Card card) {
+        cards.add(card);
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void withdraw(double amount) {
+        balance -= amount;
+    }
+
+    public void deposit(double amount) {
+        balance += amount;
+    }
+}
+
+// -------------------- Card --------------------
+class Card {
+    private String cardNumber;
+    private Date expirationDate;
+    private String status;
+    private Account account;
+
+    public Card(String cardNumber, Date expirationDate, String status, Account account) {
+        this.cardNumber = cardNumber;
+        this.expirationDate = expirationDate;
+        this.status = status;
+        this.account = account;
+    }
+
+    public boolean pay(double amount) {
+        if (account.getBalance() >= amount) {
+            account.withdraw(amount);
+            return true;
+        }
+        return false;
+    }
+}
+
+// -------------------- Terminal (Abstract) --------------------
+abstract class Terminal {
+    protected String terminalID;
+    protected String location;
+
+    public Terminal(String terminalID, String location) {
+        this.terminalID = terminalID;
+        this.location = location;
+    }
+
+    public abstract void processPayment(Card card, double amount);
+}
+
+// -------------------- ATM --------------------
+class AutomaticTerminal extends Terminal {
+
+    public AutomaticTerminal(String terminalID, String location) {
+        super(terminalID, location);
+    }
+
+    @Override
+    public void processPayment(Card card, double amount) {
+        if (card.pay(amount)) {
+            System.out.println("ATM: Withdrawal successful.");
+        } else {
+            System.out.println("ATM: Insufficient funds.");
+        }
+    }
+}
+
+// -------------------- POS Terminal --------------------
+class POSTerminal extends Terminal {
+    private String merchantName;
+
+    public POSTerminal(String terminalID, String location, String merchantName) {
+        super(terminalID, location);
+        this.merchantName = merchantName;
+    }
+
+    @Override
+    public void processPayment(Card card, double amount) {
+        if (card.pay(amount)) {
+            System.out.println("POS (" + merchantName + "): Payment successful.");
+        } else {
+            System.out.println("POS (" + merchantName + "): Payment failed.");
+        }
+    }
+}
+
+// -------------------- Demo Main --------------------
+public class Main {
+    public static void main(String[] args) {
+        Bank bank = new Bank("MyBank", "001");
+
+        Person person = new Person("John Doe", "Budapest");
+
+        Account account = new Account("ACC123", 1000);
+        bank.addAccount(account);
+        person.addAccount(account);
+
+        Card card = new Card("CARD123", new Date(), "ACTIVE", account);
+        account.addCard(card);
+        person.addCard(card);
+
+        Terminal atm = new AutomaticTerminal("ATM1", "City Center");
+        Terminal pos = new POSTerminal("POS1", "Store", "SuperShop");
+
+        atm.processPayment(card, 200);
+        pos.processPayment(card, 500);
+        pos.processPayment(card, 400); // should fail if balance too low
+    }
+}
